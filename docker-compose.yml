@@ -1,0 +1,21 @@
+version: "3"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api.dockerfile
+      args:
+        - USER_ID=1001
+        - GROUP_ID=1001
+    volumes:
+      - ./:/app
+    ports:
+      - 8080:8080
+    user: '1001'
+  # pg-admin:
+  #   image: dpage/pgadmin4:latest
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=test@example.com
+  #     - PGADMIN_DEFAULT_PASSWORD=password
+  #   ports:
+  #     - 5050:80
