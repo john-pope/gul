@@ -7,11 +7,14 @@ services:
       args:
         - USER_ID=1001
         - GROUP_ID=1001
+    env_file:
+      - .env
     volumes:
       - ./:/app
     ports:
       - 8080:8080
     user: '1001'
+    command: /home/user/.poetry/bin/poetry run /home/user/.local/bin/uvicorn main:app --host 0.0.0.0 --port 8080 --reload
   # pg-admin:
   #   image: dpage/pgadmin4:latest
   #   environment:

@@ -5,10 +5,16 @@ description = "Grand Unified Lookup"
 authors = ["Utah State University"]
 license = "MIT"
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = "^0.78.0"
 uvicorn = {extras = ["standard"], version = "^0.17.6"}
+python-dotenv = "^0.20.0"
+databases = {extras = ["asyncpg"], version = "^0.6.0"}
+sqlmodel = "^0.0.6"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

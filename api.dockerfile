@@ -22,6 +22,8 @@ COPY --chown=user:user pyproject.toml /app
 RUN $HOME/.poetry/bin/poetry config virtualenvs.create false \
   && $HOME/.poetry/bin/poetry install $(test "$ENVIRONMENT" == production && echo "--no-dev") --no-interaction --no-ansi
 
+WORKDIR /app/api
+
 COPY ./api /app/api
 
-CMD ["/home/user/.poetry/bin/poetry", "run", "/home/user/.local/bin/uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["/home/user/.poetry/bin/poetry", "run", "/home/user/.local/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
