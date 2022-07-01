@@ -1,40 +1,40 @@
 from typing import List
 
-from fastapi import FastAPI
-
-from gul.models import ARPEntry
-
 from database import database
 from database.tables import arpentries
-from gul.query import gul_lookup
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 
+from gul.models import ARPEntry, LookupResults
+from gul.repositories.query import gul_lookup
+from gul.types import InvalidRequestException
 
 app = FastAPI()
+
 
 @app.on_event("startup")
 async def startup():
     await database.connect()
 
 
+@app.exception_handler(InvalidRequestException)
+async def invalid_request_handler(request: Request, error: InvalidRequestException):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"message": f"{error}", "value": error.value},
+    )
+
+
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
 
 @app.get("/")
 def read_root():
     return {}
 
-@app.get("/test-imperative", response_model=List[ARPEntry])
-async def test():
-    q = arpentries.select().limit(10)
-    return await database.fetch_all(q)
 
-@app.get("/test-raw")
-async def test():
-    q = "select * from arpentries limit 10"
-    return await database.fetch_all(q)
-
-
-@app.get("/lookup/{search}")
+@app.get("/lookup/{search}", response_model=LookupResults)
 async def lookup(search: str):
     return await gul_lookup(search)

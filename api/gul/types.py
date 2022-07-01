@@ -1,7 +1,10 @@
 import re
-from pydantic.json import ENCODERS_BY_TYPE
 from ipaddress import IPv4Address
+from typing import List
+
+from pydantic.json import ENCODERS_BY_TYPE
 from sqlalchemy.dialects import postgresql
+
 
 class Net:
     mac: str = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
@@ -13,6 +16,7 @@ class Net:
     @property
     def ip(cls):
         return f"{cls.ip4}|{cls.ip6}"
+
 
 # add encoders for postgres specific types to pydantic
 class CustomValidator:
@@ -27,24 +31,37 @@ class CustomValidator:
             if not pattern.match(v):
                 raise TypeError(f"Invalid value {v} (pattern: {cls._pattern})")
         return v
-        
 
     @classmethod
     def __modify_schema__(cls, field_schema):
         if cls._example:
             field_schema.update(type="string", example=cls._example)
 
+
 class INET(postgresql.INET, CustomValidator):
-    _example = '192.168.0.1'
+    _example = "192.168.0.1"
     _pattern = Net.ip
 
+
 class MACADDR(postgresql.MACADDR, CustomValidator):
-    _example = 'aa:bb:cc:dd:ee:ff:00'
+    _example = "aa:bb:cc:dd:ee:ff:00"
     _pattern = Net.mac
 
 
+class CIDR(postgresql.CIDR, CustomValidator):
+    _example = "1.1.1.1/24"
+
+
 class HostName(CustomValidator):
-    _example = 'example.com'
+    _example = "example.com"
     _pattern = Net.hostname
 
+
 ENCODERS_BY_TYPE |= {INET: str} | {MACADDR: str}
+
+
+class InvalidRequestException(Exception):
+    def __init__(self, message: str, value: str, patterns: List[str]):
+        super().__init__(message)
+        self.value = value
+        self.patterns = patterns
