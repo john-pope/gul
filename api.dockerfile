@@ -1,16 +1,21 @@
 FROM python:3.10
 
+ENV ENVIRONMENT=production
+
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
 RUN groupadd -g ${GROUP_ID} user && \
-    useradd -ms /bin/bash -l -u ${USER_ID} -g user user
+  useradd -ms /bin/bash -l -u ${USER_ID} -g user user
+
+RUN mkdir /ssl
+RUN apt-get update && apt-get upgrade -y && apt-get install ssl-cert
+RUN make-ssl-cert /usr/share/ssl-cert/ssleay.cnf /ssl/self-signed-cert
 
 RUN mkdir /app
-RUN chown -R user:user /app
+RUN chown -R user:user /app /ssl
 USER user
 
-ENV ENVIRONMENT=production
 RUN python -m pip install --upgrade pip
 
 WORKDIR /app
@@ -24,6 +29,8 @@ RUN $HOME/.poetry/bin/poetry config virtualenvs.create false \
 
 WORKDIR /app/api
 
-COPY ./api /app/api
+COPY --chown=user:user ./api /app/api
+COPY --chown=user:user ./docker/entrypoint.sh /app/docker/entrypoint.sh
 
-CMD ["/home/user/.poetry/bin/poetry", "run", "/home/user/.local/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT [ "/bin/bash", "/app/docker/entrypoint.sh" ]
+CMD [ "/app/docker/run-app" ]

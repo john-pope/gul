@@ -1,12 +1,11 @@
 import os
 from dataclasses import dataclass
-from typing import Literal
-from databases import DatabaseURL
 
+from databases import DatabaseURL
 from dotenv import load_dotenv
-import ssl
 
 load_dotenv()
+
 
 @dataclass
 class DBConfig:
@@ -17,6 +16,8 @@ class DBConfig:
     port: int
     database: str
     ssl: bool
+    min_connections: int
+    max_connections: int
     verify_certificate: bool
     ssl_object: ssl.SSLContext | bool = None
 
@@ -25,20 +26,16 @@ class DBConfig:
             self.ssl_object = True
 
             if not self.verify_certificate:
-                self.ssl_object = ssl.create_default_context()
-                self.ssl_object.check_hostname = False
-                self.ssl_object.verify_mode = ssl.CERT_NONE
+                self.ssl_object = "require"
 
     def __str__(self):
-        port = ':'+self.port if self.port else ''
-        ssl_param = ''
+        port = ":" + self.port if self.port else ""
+        ssl_param = ""
 
         if self.ssl:
-            ssl_param = 'ssl=true'
+            ssl_param = "ssl=true"
 
-        return (
-            f"{self.scheme}://{self.username}:{self.password}@{self.hostname}{port}/{self.database}?{ssl_param}"
-        )
+        return f"{self.scheme}://{self.username}:{self.password}@{self.hostname}{port}/{self.database}?{ssl_param}"
 
     @property
     def url(self):
@@ -52,8 +49,10 @@ db_config = DBConfig(
     hostname=os.environ.get("DB_HOSTNAME"),
     port=os.environ.get("DB_PORT"),
     database=os.environ.get("DB_DATABASE"),
-    ssl=os.environ.get("DB_USE_SSL", 'true') == 'true',
-    verify_certificate=os.environ.get("DB_VERIFY_CERTIFICATE") == 'true'
+    ssl=os.environ.get("DB_USE_SSL", "true") == "true",
+    min_connections=int(os.environ.get("DB_MIN_CONNECTIONS", "2")),
+    max_connections=int(os.environ.get("DB_MAX_CONNECTIONS", "5")),
+    verify_certificate=os.environ.get("DB_VERIFY_CERTIFICATE") == "true",
 )
 
 # load from env
