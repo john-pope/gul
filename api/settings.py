@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from typing import Union
 
 from databases import DatabaseURL
 from dotenv import load_dotenv
@@ -19,7 +20,7 @@ class DBConfig:
     min_connections: int
     max_connections: int
     verify_certificate: bool
-    ssl_object: ssl.SSLContext | bool = None
+    ssl_object: Union[bool, str] = None
 
     def __post_init__(self):
         if self.ssl:
